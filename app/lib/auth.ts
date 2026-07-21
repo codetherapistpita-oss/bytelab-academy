@@ -1,4 +1,9 @@
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { appConfig } from "./config";
+import { firebaseAuth } from "./firebase-client";
 
 export type AuthUser = {
   uid: string;
@@ -151,5 +156,78 @@ export function loadSession(): AuthUser | null {
 export function clearSession() {
   if (typeof window !== "undefined") {
     window.sessionStorage.removeItem(SESSION_KEY);
+  }
+}
+
+export async function signInWithGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+
+    provider.setCustomParameters({
+      prompt: "select_account",
+    });
+
+    const result = await signInWithPopup(
+      firebaseAuth,
+      provider,
+    );
+
+    const firebaseUser = result.user;
+
+    if (!firebaseUser.email) {
+      throw new Error(
+        "The selected Google account does not provide an email address.",
+      );
+    }
+
+    const idToken = await firebaseUser.getIdToken();
+    const tokenResult =
+      await firebaseUser.getIdTokenResult();
+
+    const user: AuthUser = {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      emailVerified: firebaseUser.emailVerified,
+      idToken,
+      refreshToken: firebaseUser.refreshToken,
+      expiresAt: new Date(
+        tokenResult.expirationTime,
+      ).getTime(),
+    };
+
+    saveSession(user);
+    return user;
+  } catch (caught) {
+    const code =
+      typeof caught === "object" &&
+      caught !== null &&
+      "code" in caught
+        ? String(caught.code)
+        : "";
+
+    const messages: Record<string, string> = {
+      "auth/popup-closed-by-user":
+        "Google Sign-In was closed before completion.",
+      "auth/popup-blocked":
+        "The browser blocked the Google window. Allow pop-ups and try again.",
+      "auth/cancelled-popup-request":
+        "Another Google Sign-In request is already open.",
+      "auth/account-exists-with-different-credential":
+        "An account already uses this email. Sign in with your email and password first.",
+      "auth/unauthorized-domain":
+        "This website domain is not authorized in Firebase.",
+    };
+
+    if (code && messages[code]) {
+      throw new Error(messages[code]);
+    }
+
+    if (caught instanceof Error) {
+      throw caught;
+    }
+
+    throw new Error(
+      "Google Sign-In could not be completed.",
+    );
   }
 }

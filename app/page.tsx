@@ -10,6 +10,7 @@ import {
   resendVerification,
   sendPasswordReset,
   signIn,
+  signInWithGoogle,
   signUp,
 } from "./lib/auth";
 import { fetchPublicCourses, submitEnrollment } from "./lib/api";
@@ -468,6 +469,24 @@ function AuthModal({ view, setView, currentUser, onClose, onAuthenticated, onUse
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  async function continueWithGoogle() {
+    setError("");
+    setLoading(true);
+
+    try {
+      const nextUser = await signInWithGoogle();
+      onAuthenticated(nextUser);
+    } catch (caught) {
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : "Google Sign-In could not be completed.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setError("");
@@ -546,6 +565,20 @@ function AuthModal({ view, setView, currentUser, onClose, onAuthenticated, onUse
             <p className="eyebrow red"><span /> Student access</p>
             <h2 id="auth-title">{view === "signup" ? "Create your account" : view === "reset" ? "Reset your password" : "Welcome back"}</h2>
             <p className="auth-intro">{view === "signup" ? "Use any valid email address to create your ByteLab Academy account." : view === "reset" ? "We will email you a secure password-reset link." : "Sign in to continue learning or enroll in a course."}</p>
+            {view !== "reset" && (
+              <>
+                <button
+                  type="button"
+                  className="google-auth-button"
+                  disabled={loading}
+                  onClick={continueWithGoogle}
+                >
+                  <span className="google-mark" aria-hidden="true">G</span>
+                  {loading ? "Please wait…" : "Continue with Google"}
+                </button>
+                <div className="auth-divider"><span>or continue with email</span></div>
+              </>
+            )}
             <form onSubmit={submit} className="auth-form">
               <label><span>Email address</span><input type="email" required autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" /></label>
               {view !== "reset" && <label><span>Password</span><input type="password" required minLength={8} autoComplete={view === "signup" ? "new-password" : "current-password"} value={password} onChange={(event) => setPassword(event.target.value)} placeholder="At least 8 characters" /></label>}
