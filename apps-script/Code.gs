@@ -27,12 +27,13 @@ const HEADERS = {
   ],
   Students: [
     "userId", "email", "fullName", "age", "phone", "whatsapp", "district",
-    "education", "occupation", "createdAt", "updatedAt",
+    "education", "occupation", "createdAt", "updatedAt", "studentId",
+    "photoFileId", "status", "invitedBy",
   ],
   Enrollments: [
     "enrollmentId", "userId", "email", "courseId", "courseTitle",
     "learningMode", "experience", "goals", "status", "createdAt", "updatedAt",
-    "fullName", "age", "phone", "whatsapp", "district", "education", "occupation",
+    "fullName", "age", "phone", "whatsapp", "district", "education", "occupation", "photoFileId", "studentId",
   ],
   Admins: ["email", "role", "status", "createdAt", "updatedAt"],
   Audit_Log: ["timestamp", "userId", "email", "action", "reference", "details"],
@@ -104,6 +105,26 @@ function doPost(e) {
       const user = verifyFirebaseUser_(request.idToken, true);
       return json_({ ok: true, data: updateEnrollmentStatus_(user, request.payload || {}) });
     }
+    if (action === "adminSaveStudent") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: adminSaveStudent_(user, request.payload || {}) });
+    }
+    if (action === "adminUpdateStudentStatus") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: adminUpdateStudentStatus_(user, request.payload || {}) });
+    }
+    if (action === "adminSaveCourse") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: adminSaveCourse_(user, request.payload || {}) });
+    }
+    if (action === "adminManualEnrollment") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: adminManualEnrollment_(user, request.payload || {}) });
+    }
+    if (action === "adminGetPhoto") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: adminGetPhoto_(user, request.payload || {}) });
+    }
     throw new Error("Unsupported request action.");
   } catch (error) {
     logError_(String(request.action || "POST"), error, { hasToken: Boolean(request.idToken) });
@@ -112,7 +133,6 @@ function doPost(e) {
 }
 
 function enroll_(user, payload) {
-  if (payload.website) throw new Error("The request could not be accepted.");
   if (payload.consent !== true) throw new Error("Consent is required before enrollment.");
 
   const courseId = requiredText_(payload.courseId, "Course", 40);
@@ -142,6 +162,13 @@ function enroll_(user, payload) {
   if (goals.length < 20) throw new Error("Tell us a little more about what you want to achieve.");
 
   const spreadsheet = getSpreadsheet_();
+  const studentsSheet = spreadsheet.getSheetByName(SHEETS.STUDENTS);
+  const currentStudent = rowsAsObjects_(studentsSheet).find(function (record) {
+    return String(record.userId) === user.uid || String(record.email).trim().toLowerCase() === user.email;
+  });
+  if (currentStudent && String(currentStudent.status).toLowerCase() === "suspended") {
+    throw new Error("This student account is suspended. Contact the academy for assistance.");
+  }
   const coursesSheet = spreadsheet.getSheetByName(SHEETS.COURSES);
   const course = findRecord_(coursesSheet, "courseId", courseId);
   if (!course || String(course.status).toLowerCase() !== "open") {
@@ -160,7 +187,8 @@ function enroll_(user, payload) {
       throw new Error("You already have an active application for this course.");
     }
 
-    upsertStudent_(spreadsheet.getSheetByName(SHEETS.STUDENTS), user, {
+    const photoFileId = savePhoto_(payload.photo, currentStudent && currentStudent.photoFileId, user.email);
+    const savedStudent = upsertStudent_(studentsSheet, user, {
       fullName: fullName,
       age: age,
       phone: phone,
@@ -168,7 +196,9 @@ function enroll_(user, payload) {
       district: district,
       education: education,
       occupation: occupation,
+      photoFileId: photoFileId,
     });
+    linkStudentEnrollments_(spreadsheet.getSheetByName(SHEETS.ENROLLMENTS), savedStudent);
 
     const now = new Date();
     const enrollmentId = "BLA-" + Utilities.formatDate(now, Session.getScriptTimeZone(), "yyyyMMdd") + "-" +
@@ -192,6 +222,8 @@ function enroll_(user, payload) {
       district: district,
       education: education,
       occupation: occupation,
+      photoFileId: photoFileId,
+      studentId: savedStudent.studentId,
     });
 
     appendObject_(spreadsheet.getSheetByName(SHEETS.AUDIT), {
@@ -213,7 +245,7 @@ function enroll_(user, payload) {
 function getMyAccount_(user) {
   const spreadsheet = getSpreadsheet_();
   const student = rowsAsObjects_(spreadsheet.getSheetByName(SHEETS.STUDENTS)).find(function (record) {
-    return record.userId === user.uid;
+    return record.userId === user.uid || String(record.email).trim().toLowerCase() === user.email;
   }) || null;
   const enrollments = rowsAsObjects_(spreadsheet.getSheetByName(SHEETS.ENROLLMENTS)).filter(function (record) {
     return record.userId === user.uid;
@@ -272,7 +304,9 @@ function verifyFirebaseUser_(idToken, requireVerified) {
 function upsertStudent_(sheet, user, profile) {
   const headers = headerValues_(sheet);
   const records = rowsAsObjects_(sheet);
-  const index = records.findIndex(function (record) { return record.userId === user.uid; });
+  const index = records.findIndex(function (record) {
+    return record.userId === user.uid || String(record.email).trim().toLowerCase() === user.email;
+  });
   const now = new Date();
   const existingCreatedAt = index >= 0 ? records[index].createdAt : now;
   const values = objectToRow_(headers, {
@@ -287,9 +321,75 @@ function upsertStudent_(sheet, user, profile) {
     occupation: profile.occupation,
     createdAt: existingCreatedAt,
     updatedAt: now,
+    studentId: index >= 0 && records[index].studentId ? records[index].studentId : nextStudentId_(records),
+    photoFileId: profile.photoFileId || (index >= 0 ? records[index].photoFileId : ""),
+    status: index >= 0 && records[index].status && String(records[index].status) !== "Invited" ? records[index].status : "Active",
+    invitedBy: index >= 0 ? records[index].invitedBy : "",
   });
   if (index >= 0) sheet.getRange(index + 2, 1, 1, headers.length).setValues([values]);
   else sheet.appendRow(values);
+  return headers.reduce(function (record, header, position) { record[header] = values[position]; return record; }, {});
+}
+
+function linkStudentEnrollments_(sheet, student) {
+  if (!sheet || !student) return;
+  const headers = headerValues_(sheet);
+  const records = rowsAsObjects_(sheet);
+  let changed = false;
+  records.forEach(function (record) {
+    const sameEmail = String(record.email).trim().toLowerCase() === String(student.email).trim().toLowerCase();
+    const sameUser = record.userId && String(record.userId) === String(student.userId);
+    if (!sameEmail && !sameUser) return;
+    if (!record.userId && student.userId) { record.userId = student.userId; changed = true; }
+    if (!record.studentId && student.studentId) { record.studentId = student.studentId; changed = true; }
+  });
+  if (changed && records.length) sheet.getRange(2, 1, records.length, headers.length).setValues(records.map(function (record) { return objectToRow_(headers, record); }));
+}
+
+function nextStudentId_(records) {
+  const year = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy");
+  let highest = 0;
+  records.forEach(function (record) {
+    const match = String(record.studentId || "").match(/BL-\d{4}-(\d+)$/);
+    if (match) highest = Math.max(highest, Number(match[1]));
+  });
+  return "BL-" + year + "-" + String(highest + 1).padStart(4, "0");
+}
+
+function savePhoto_(photo, existingFileId, reference) {
+  if (!photo) {
+    if (existingFileId) return String(existingFileId);
+    throw new Error("A clear passport or profile photo is required.");
+  }
+  const mimeType = String(photo.mimeType || "").toLowerCase();
+  if (!["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+    throw new Error("Upload a JPG, PNG or WebP image.");
+  }
+  const base64 = String(photo.base64 || "");
+  if (!base64 || base64.length > 3000000) throw new Error("The photo is too large. Choose a smaller image.");
+  let bytes;
+  try { bytes = Utilities.base64Decode(base64); } catch (_) { throw new Error("The photo could not be read."); }
+  if (bytes.length > 2200000) throw new Error("The photo must be smaller than 2 MB after preparation.");
+
+  const folder = getPhotoFolder_();
+  const extension = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+  const name = "student-" + String(reference || Utilities.getUuid()).replace(/[^a-z0-9_-]/gi, "-") + "-" + Date.now() + "." + extension;
+  const file = folder.createFile(Utilities.newBlob(bytes, mimeType, name));
+  if (existingFileId) {
+    try { DriveApp.getFileById(String(existingFileId)).setTrashed(true); } catch (_) {}
+  }
+  return file.getId();
+}
+
+function getPhotoFolder_() {
+  const properties = PropertiesService.getScriptProperties();
+  const stored = properties.getProperty("STUDENT_PHOTO_FOLDER_ID");
+  if (stored) {
+    try { return DriveApp.getFolderById(stored); } catch (_) {}
+  }
+  const folder = DriveApp.createFolder("ByteLab Academy Student Photos");
+  properties.setProperty("STUDENT_PHOTO_FOLDER_ID", folder.getId());
+  return folder;
 }
 
 function sendEnrollmentEmails_(email, name, course, enrollmentId) {
@@ -453,4 +553,3 @@ function logError_(action, error, details) {
 function json_(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
-

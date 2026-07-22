@@ -7,13 +7,14 @@ import {
   clearSession,
   loadSession,
   reloadUser,
+  refreshSession,
   resendVerification,
   sendPasswordReset,
   signIn,
   signInWithGoogle,
   signUp,
 } from "./lib/auth";
-import { fetchPublicCourses, submitEnrollment } from "./lib/api";
+import { fetchPublicCourses, prepareImage, submitEnrollment, type ImagePayload } from "./lib/api";
 import { appConfig } from "./lib/config";
 
 type AuthView = "signin" | "signup" | "reset" | "verify";
@@ -602,6 +603,21 @@ function AuthModal({ view, setView, currentUser, onClose, onAuthenticated, onUse
 function EnrollmentModal({ course, user, onClose, onSuccess }: { course: Course; user: AuthUser; onClose: () => void; onSuccess: (message: string) => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [photo, setPhoto] = useState<ImagePayload | null>(null);
+  const [photoPreview, setPhotoPreview] = useState("");
+
+  async function choosePhoto(file?: File) {
+    if (!file) return;
+    setError("");
+    try {
+      const prepared = await prepareImage(file);
+      setPhoto(prepared.payload);
+      setPhotoPreview(prepared.preview);
+    } catch (caught) {
+      setPhoto(null); setPhotoPreview("");
+      setError(caught instanceof Error ? caught.message : "The photo could not be prepared.");
+    }
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -609,7 +625,9 @@ function EnrollmentModal({ course, user, onClose, onSuccess }: { course: Course;
     setLoading(true);
     const form = new FormData(event.currentTarget);
     try {
-      const result = await submitEnrollment(user.idToken, {
+      if (!photo) throw new Error("Please add a clear passport or profile photo.");
+      const freshUser = await refreshSession(user);
+      const result = await submitEnrollment(freshUser.idToken, {
         courseId: course.id,
         courseTitle: course.title,
         fullName: String(form.get("fullName") ?? ""),
@@ -623,7 +641,7 @@ function EnrollmentModal({ course, user, onClose, onSuccess }: { course: Course;
         experience: String(form.get("experience") ?? ""),
         goals: String(form.get("goals") ?? ""),
         consent: form.get("consent") === "on",
-        website: String(form.get("website") ?? ""),
+        photo,
       });
       onSuccess(`Enrollment received. Your reference is ${result.enrollmentId}.`);
     } catch (caught) {
@@ -643,8 +661,11 @@ function EnrollmentModal({ course, user, onClose, onSuccess }: { course: Course;
           <div className="enrollment-step"><small>Signed in as</small><strong>{user.email}</strong></div>
         </div>
         <form className="enrollment-form" onSubmit={submit}>
-          <input className="honeypot" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" />
           <fieldset><legend><span>01</span>Personal information</legend><div className="form-grid">
+            <label className="field-wide photo-upload"><span>Passport or profile photo</span><div className="photo-picker">
+              {photoPreview ? <img src={photoPreview} alt="Selected student" /> : <i aria-hidden="true">+</i>}
+              <span><strong>{photoPreview ? "Photo ready" : "Choose a clear photo"}</strong><small>JPG, PNG or WebP. The full image is kept and large files are prepared automatically.</small><input type="file" accept="image/jpeg,image/png,image/webp" required={!photo} onChange={(event) => choosePhoto(event.target.files?.[0])} /></span>
+            </div></label>
             <label className="field-wide"><span>Full name</span><input name="fullName" required minLength={3} maxLength={100} placeholder="Enter your full legal name" /></label>
             <label><span>Age</span><input name="age" type="number" required min={13} max={100} placeholder="e.g. 23" /></label>
             <label><span>District</span><input name="district" required minLength={2} maxLength={60} placeholder="e.g. Kampala" /></label>

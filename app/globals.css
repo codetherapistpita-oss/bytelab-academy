@@ -459,3 +459,11 @@ a { color: inherit; text-decoration: none; }
 .auth-divider span {
   white-space: nowrap;
 }
+
+.photo-picker { display:flex; align-items:center; gap:1rem; padding:1rem; border:1px dashed #9aa9c0; border-radius:16px; background:#f7f9fd; }
+.photo-picker > i, .photo-picker > img { width:92px; height:92px; flex:0 0 92px; border-radius:14px; object-fit:contain; background:#e8edf6; }
+.photo-picker > i { display:grid; place-items:center; font-style:normal; font-size:2rem; color:#173776; }
+.photo-picker > span { display:grid; gap:.35rem; }
+.photo-picker small { color:#65738a; line-height:1.45; }
+.photo-picker input { margin-top:.35rem; max-width:100%; }
+@media (max-width:560px) { .photo-picker { align-items:flex-start; } .photo-picker > i, .photo-picker > img { width:72px; height:72px; flex-basis:72px; } }

@@ -22,6 +22,13 @@ type FirebaseAuthResponse = {
   expiresIn: string;
 };
 
+type FirebaseRefreshResponse = {
+  user_id: string;
+  id_token: string;
+  refresh_token: string;
+  expires_in: string;
+};
+
 const SESSION_KEY = "bytelab-academy-session";
 
 function requireApiKey() {
@@ -151,6 +158,37 @@ export function loadSession(): AuthUser | null {
   } catch {
     return null;
   }
+}
+
+export async function refreshSession(user: AuthUser, force = false): Promise<AuthUser> {
+  if (!force && user.expiresAt > Date.now() + 5 * 60 * 1000) return user;
+
+  const current = firebaseAuth.currentUser;
+  if (current && current.uid === user.uid) {
+    const idToken = await current.getIdToken(true);
+    const result = await current.getIdTokenResult();
+    const refreshed = { ...user, idToken, refreshToken: current.refreshToken, expiresAt: new Date(result.expirationTime).getTime() };
+    saveSession(refreshed);
+    return refreshed;
+  }
+
+  if (!user.refreshToken) throw new Error("Your session has expired. Please sign in again.");
+  const response = await fetch(`https://securetoken.googleapis.com/v1/token?key=${requireApiKey()}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: user.refreshToken }),
+  });
+  const data = (await response.json()) as FirebaseRefreshResponse & { error?: { message?: string } };
+  if (!response.ok || !data.id_token) throw new Error("Your session has expired. Please sign in again.");
+  const refreshed: AuthUser = {
+    ...user,
+    uid: data.user_id || user.uid,
+    idToken: data.id_token,
+    refreshToken: data.refresh_token || user.refreshToken,
+    expiresAt: Date.now() + Number(data.expires_in || 3600) * 1000,
+  };
+  saveSession(refreshed);
+  return refreshed;
 }
 
 export function clearSession() {
