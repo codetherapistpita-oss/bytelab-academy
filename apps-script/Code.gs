@@ -16,6 +16,7 @@ const SHEETS = {
   AUDIT: "Audit_Log",
   ERRORS: "Error_Log",
   REPORTS: "Reports",
+  ADMINS: "Admins",
 };
 
 const HEADERS = {
@@ -31,7 +32,9 @@ const HEADERS = {
   Enrollments: [
     "enrollmentId", "userId", "email", "courseId", "courseTitle",
     "learningMode", "experience", "goals", "status", "createdAt", "updatedAt",
+    "fullName", "age", "phone", "whatsapp", "district", "education", "occupation",
   ],
+  Admins: ["email", "role", "status", "createdAt", "updatedAt"],
   Audit_Log: ["timestamp", "userId", "email", "action", "reference", "details"],
   Error_Log: ["timestamp", "action", "message", "details"],
 };
@@ -54,6 +57,7 @@ function setupAcademy() {
   });
   ensureReportsSheet_(spreadsheet);
   seedCourses_(spreadsheet.getSheetByName(SHEETS.COURSES));
+  seedAdmin_(spreadsheet.getSheetByName(SHEETS.ADMINS));
 
   const firstSheet = spreadsheet.getSheets()[0];
   if (firstSheet && !Object.values(SHEETS).includes(firstSheet.getName())) {
@@ -91,6 +95,14 @@ function doPost(e) {
     if (action === "myAccount") {
       const user = verifyFirebaseUser_(request.idToken, true);
       return json_({ ok: true, data: getMyAccount_(user) });
+    }
+    if (action === "adminDashboard") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: getAdminDashboard_(user) });
+    }
+    if (action === "adminUpdateEnrollment") {
+      const user = verifyFirebaseUser_(request.idToken, true);
+      return json_({ ok: true, data: updateEnrollmentStatus_(user, request.payload || {}) });
     }
     throw new Error("Unsupported request action.");
   } catch (error) {
@@ -173,6 +185,13 @@ function enroll_(user, payload) {
       status: "Pending review",
       createdAt: now,
       updatedAt: now,
+      fullName: fullName,
+      age: age,
+      phone: phone,
+      whatsapp: whatsapp,
+      district: district,
+      education: education,
+      occupation: occupation,
     });
 
     appendObject_(spreadsheet.getSheetByName(SHEETS.AUDIT), {
@@ -434,3 +453,4 @@ function logError_(action, error, details) {
 function json_(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
 }
+
