@@ -1,5 +1,5 @@
 /**
- * ByteLab Academy API
+ * Byte Soma API
  * Google Apps Script V8 runtime
  *
  * Required Script Properties:
@@ -48,7 +48,7 @@ function setupAcademy() {
   if (spreadsheetId) {
     spreadsheet = SpreadsheetApp.openById(spreadsheetId);
   } else {
-    spreadsheet = SpreadsheetApp.create("ByteLab Academy Database");
+    spreadsheet = SpreadsheetApp.create("Byte Soma Database");
     spreadsheetId = spreadsheet.getId();
     properties.setProperty("SPREADSHEET_ID", spreadsheetId);
   }
@@ -65,7 +65,7 @@ function setupAcademy() {
     spreadsheet.deleteSheet(firstSheet);
   }
 
-  Logger.log("ByteLab Academy database: " + spreadsheet.getUrl());
+  Logger.log("Byte Soma database: " + spreadsheet.getUrl());
   return spreadsheet.getUrl();
 }
 
@@ -75,7 +75,7 @@ function doGet(e) {
     if (action === "courses") return json_({ ok: true, data: listCourses_() });
     return json_({
       ok: true,
-      data: { service: "ByteLab Academy API", status: "online", version: "1.0.0" },
+      data: { service: "Byte Soma API", status: "online", version: "1.0.0" },
     });
   } catch (error) {
     logError_("GET", error, e && e.parameter ? e.parameter : {});
@@ -387,7 +387,7 @@ function getPhotoFolder_() {
   if (stored) {
     try { return DriveApp.getFolderById(stored); } catch (_) {}
   }
-  const folder = DriveApp.createFolder("ByteLab Academy Student Photos");
+  const folder = DriveApp.createFolder("Byte Soma Student Photos");
   properties.setProperty("STUDENT_PHOTO_FOLDER_ID", folder.getId());
   return folder;
 }
@@ -396,19 +396,19 @@ function sendEnrollmentEmails_(email, name, course, enrollmentId) {
   try {
     MailApp.sendEmail({
       to: email,
-      subject: "ByteLab Academy enrollment received — " + enrollmentId,
+      subject: "Byte Soma enrollment received — " + enrollmentId,
       htmlBody:
         "<p>Hello " + html_(name) + ",</p>" +
         "<p>We received your application for <strong>" + html_(course) + "</strong>.</p>" +
         "<p>Your reference is <strong>" + html_(enrollmentId) + "</strong>. Our admissions team will review it and contact you.</p>" +
-        "<p>ByteLab Academy<br><em>Practical skills. Intelligent futures.</em></p>",
+        "<p>Byte Soma<br><em>Practical skills. Intelligent futures.</em></p>",
     });
     const admin = PropertiesService.getScriptProperties().getProperty("ACADEMY_ADMIN_EMAIL");
     if (admin) {
       MailApp.sendEmail({
         to: admin,
         subject: "New academy enrollment — " + enrollmentId,
-        htmlBody: "<p>New application from <strong>" + html_(name) + "</strong> for " + html_(course) + ".</p><p>Open the ByteLab Academy spreadsheet to review it.</p>",
+        htmlBody: "<p>New application from <strong>" + html_(name) + "</strong> for " + html_(course) + ".</p><p>Open the Byte Soma spreadsheet to review it.</p>",
       });
     }
   } catch (error) {
@@ -431,7 +431,7 @@ function ensureReportsSheet_(spreadsheet) {
   let sheet = spreadsheet.getSheetByName(SHEETS.REPORTS);
   if (!sheet) sheet = spreadsheet.insertSheet(SHEETS.REPORTS);
   sheet.clear();
-  sheet.getRange("A1:B1").setValues([["ByteLab Academy", "Live enrollment report"]]);
+  sheet.getRange("A1:B1").setValues([["Byte Soma", "Live enrollment report"]]);
   sheet.getRange("A3:B7").setValues([
     ["Metric", "Value"],
     ["Registered students", "=MAX(COUNTA(Students!A:A)-1,0)"],
