@@ -1,14 +1,14 @@
-# ByteLab Academy Setup Guide
+# Byte Soma Setup Guide
 
 Follow these steps in order. Complete Firebase first, Apps Script second, and the website configuration last.
 
 ## 1. Create the Firebase Authentication project
 
-1. Open the Firebase Console and create a project named `ByteLab Academy`.
+1. Open the Firebase Console and create a project named `Byte Soma`.
 2. Open **Build → Authentication → Get started**.
 3. Under **Sign-in method**, enable **Email/Password**.
 4. Open **Project settings → General**.
-5. Under **Your apps**, create a Web app named `ByteLab Academy Web`.
+5. Under **Your apps**, create a Web app named `Byte Soma Web`.
 6. Copy the value named `apiKey` from the Firebase configuration.
 7. Under **Authentication → Settings → Authorized domains**, add every domain that will host the academy website.
 
@@ -19,7 +19,7 @@ The web API key identifies the Firebase project. Account security still depends 
 ### Browser method
 
 1. Open `https://script.google.com` using the official ByteLab Google account.
-2. Create a new standalone project named `ByteLab Academy API`.
+2. Create a new standalone project named `Byte Soma API`.
 3. Replace the default code with the contents of `apps-script/Code.gs`.
 4. Open **Project settings** and enable **Show appsscript.json manifest file in editor**.
 5. Replace the manifest with `apps-script/appsscript.json`.
@@ -30,7 +30,7 @@ The web API key identifies the Firebase project. Account security still depends 
 
 7. Select `setupAcademy` from the function list and click **Run**.
 8. Accept the requested Google permissions.
-9. Open the execution log. It contains the new ByteLab Academy database URL.
+9. Open the execution log. It contains the new Byte Soma database URL.
 
 The setup function creates and formats these sheets:
 
@@ -51,7 +51,7 @@ Install Node.js 20 or later before installing clasp.
 npm install -g @google/clasp
 clasp login
 cd apps-script
-clasp create --type standalone --title "ByteLab Academy API"
+clasp create --type standalone --title "Byte Soma API"
 clasp push
 ```
 
@@ -61,7 +61,7 @@ After pushing, complete the Script Properties, run `setupAcademy`, and deploy us
 
 1. In Apps Script, click **Deploy → New deployment**.
 2. Select **Web app**.
-3. Description: `ByteLab Academy API v1`.
+3. Description: `Byte Soma API v1`.
 4. Execute as: **Me**.
 5. Who has access: **Anyone**.
 6. Click **Deploy**.
@@ -147,7 +147,7 @@ Create an empty GitHub repository, then run from the project folder:
 ```bash
 git init
 git add .
-git commit -m "Build ByteLab Academy enrollment platform"
+git commit -m "Build Byte Soma enrollment platform"
 git branch -M main
 git remote add origin YOUR_GITHUB_REPOSITORY_URL
 git push -u origin main
