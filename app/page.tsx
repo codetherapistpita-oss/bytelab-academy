@@ -140,7 +140,7 @@ export default function Home() {
           </div>
         </div>
         <nav className="container nav" aria-label="Primary navigation">
-          <a className="brand" href="#top" aria-label="ByteLab Academy home">
+          <a className="brand" href="#top" aria-label="Byte Soma home">
             <span className="brand-mark">BL</span>
             <span className="brand-copy">
               <strong>ByteLab</strong>
@@ -202,7 +202,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="hero-visual" aria-label="ByteLab Academy learning dashboard illustration">
+          <div className="hero-visual" aria-label="Byte Soma learning dashboard illustration">
             <div className="visual-glow" />
             <div className="code-card">
               <div className="code-top"><span /><span /><span /><small>academy-project.js</small></div>
@@ -339,7 +339,7 @@ export default function Home() {
           <div className="about-copy">
             <p className="eyebrow"><span /> About the academy</p>
             <h2>Technology education built for practical progress.</h2>
-            <p>ByteLab Academy is the learning and training arm of ByteLab Uganda Ltd. We help learners understand modern technology, use it responsibly and turn knowledge into useful systems, products and opportunities.</p>
+            <p>Byte Soma is the learning and training arm of ByteLab Uganda Ltd. We help learners understand modern technology, use it responsibly and turn knowledge into useful systems, products and opportunities.</p>
             <div className="values-row">
               <div><strong>Practical</strong><small>Learn by building</small></div>
               <div><strong>Responsible</strong><small>Use technology well</small></div>
@@ -354,7 +354,7 @@ export default function Home() {
           <div>
             <p className="eyebrow light"><span /> Your next step</p>
             <h2>Not sure which course fits your goal?</h2>
-            <p>Speak with the ByteLab Academy admissions team and get guidance before you enroll.</p>
+            <p>Speak with the Byte Soma admissions team and get guidance before you enroll.</p>
           </div>
           <div className="contact-actions">
             <a className="button button-white button-large" href="mailto:official.bytelab.ug@gmail.com">Email admissions <Arrow /></a>
@@ -548,7 +548,7 @@ function AuthModal({ view, setView, currentUser, onClose, onAuthenticated, onUse
       <button className="modal-backdrop" onClick={onClose} aria-label="Close account window" />
       <section className="modal-card auth-modal">
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
-        <div className="auth-brand"><span className="brand-mark">BL</span><strong>ByteLab Academy</strong></div>
+        <div className="auth-brand"><span className="brand-mark">BL</span><strong>Byte Soma</strong></div>
         {pendingCourse && <div className="pending-course"><span>Selected course</span><strong>{pendingCourse.title}</strong></div>}
 
         {view === "verify" ? (
@@ -565,7 +565,7 @@ function AuthModal({ view, setView, currentUser, onClose, onAuthenticated, onUse
           <>
             <p className="eyebrow red"><span /> Student access</p>
             <h2 id="auth-title">{view === "signup" ? "Create your account" : view === "reset" ? "Reset your password" : "Welcome back"}</h2>
-            <p className="auth-intro">{view === "signup" ? "Use any valid email address to create your ByteLab Academy account." : view === "reset" ? "We will email you a secure password-reset link." : "Sign in to continue learning or enroll in a course."}</p>
+            <p className="auth-intro">{view === "signup" ? "Use any valid email address to create your Byte Soma account." : view === "reset" ? "We will email you a secure password-reset link." : "Sign in to continue learning or enroll in a course."}</p>
             {view !== "reset" && (
               <>
                 <button
@@ -679,7 +679,7 @@ function EnrollmentModal({ course, user, onClose, onSuccess }: { course: Course;
             <label><span>Current experience</span><select name="experience" required defaultValue=""><option value="" disabled>Select your experience</option><option>Complete beginner</option><option>Some basic knowledge</option><option>Have completed small projects</option><option>Already working in the field</option></select></label>
             <label className="field-wide"><span>What do you want to achieve?</span><textarea name="goals" required minLength={20} maxLength={800} rows={4} placeholder="Tell us what you want to learn or build through this course." /></label>
           </div></fieldset>
-          <label className="consent-field"><input type="checkbox" name="consent" required /><span>I confirm that the information is correct and allow ByteLab Academy to contact me about this application.</span></label>
+          <label className="consent-field"><input type="checkbox" name="consent" required /><span>I confirm that the information is correct and allow Byte Soma to contact me about this application.</span></label>
           {error && <div className="form-error">{error}</div>}
           <div className="form-actions"><button type="button" className="button button-outline" onClick={onClose}>Save for later</button><button className="button button-primary button-large" disabled={loading}>{loading ? "Submitting…" : "Submit enrollment"} <Arrow /></button></div>
         </form>
