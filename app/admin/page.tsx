@@ -268,7 +268,7 @@ function Overview({ data, onSelect }: { data: Dashboard; onSelect: (item: Enroll
     ["Pending review", data.counts.pending, "red"],
     ["Approved", data.counts.approved, "green"],
   ];
-  return <><section className={styles.welcome}><div><p className={styles.eyebrow}>ACADEMY CONTROL CENTRE</p><h2>Good to see you.</h2><small>Here is the latest activity across ByteLab Academy.</small></div><div className={styles.online}><i /><span><strong>System online</strong><small>Updated {date(data.generatedAt)}</small></span></div></section>
+  return <><section className={styles.welcome}><div><p className={styles.eyebrow}>ACADEMY CONTROL CENTRE</p><h2>Good to see you.</h2><small>Here is the latest activity across Byte Soma.</small></div><div className={styles.online}><i /><span><strong>System online</strong><small>Updated {date(data.generatedAt)}</small></span></div></section>
     <section className={styles.stats}>{cards.map(([label, value, tone]) => <article key={String(label)} data-tone={tone}><span>{label}</span><strong>{value}</strong><small>Live academy data</small></article>)}</section>
     <section className={styles.panels}><article className={styles.panel}><div className={styles.panelTitle}><span><p className={styles.eyebrow}>RECENT ACTIVITY</p><h3>Latest applications</h3></span><b>{data.enrollments.length} total</b></div>
       {data.enrollments.slice(0, 7).map((item) => <button className={styles.recent} key={item.enrollmentId} onClick={() => onSelect(item)}><Person name={item.fullName} email={item.email} /><Badge status={item.status} /><time>{date(item.createdAt)}</time></button>)}
