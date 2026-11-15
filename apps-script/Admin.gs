@@ -1,5 +1,5 @@
 /**
- * ByteLab Academy Admin API
+ * Byte Soma Admin API
  *
  * Security model:
  * - Firebase verifies the identity token.
