@@ -1,4 +1,4 @@
-name: Deploy ByteLab Academy to GitHub Pages
+name: Deploy Byte Soma to GitHub Pages
 
 on:
   push:
