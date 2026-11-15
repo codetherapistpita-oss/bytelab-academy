@@ -1,4 +1,4 @@
-# ByteLab Academy
+# Byte Soma
 
 A modern, responsive course-discovery and student-enrollment platform for ByteLab Uganda Ltd.
 
@@ -20,7 +20,7 @@ A modern, responsive course-discovery and student-enrollment platform for ByteLa
 
 ```text
 Student browser
-    ├── ByteLab Academy frontend
+    ├── Byte Soma frontend
     ├── Firebase Authentication (email/password)
     └── Google Apps Script API
             └── Private Google Sheets database
@@ -65,7 +65,7 @@ The repository is ready for GitHub. Environment files such as `.env.local` are i
 ## Brand
 
 - Company: ByteLab Uganda Ltd
-- Product: ByteLab Academy
+- Product: Byte Soma
 - Company tagline: Beyond Code.
 - Academy line: Practical skills. Intelligent futures.
 - Primary: Deep blue
