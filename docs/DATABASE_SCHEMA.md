@@ -1,4 +1,4 @@
-# ByteLab Academy Database
+# Byte Soma Database
 
 ## Courses
 
