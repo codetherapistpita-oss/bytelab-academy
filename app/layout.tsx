@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ByteLab Academy | Practical Technology Courses",
+  title: "Byte Soma | Practical Technology Courses",
   description:
     "Practical programmes in software development, artificial intelligence, cybersecurity, networking and digital skills.",
   other: {
